@@ -1,6 +1,6 @@
 package com.cinema.cinema.booking.exception;
 
-public class DatabaseException extends RuntimeException {
+public class DatabaseException extends Exception {
     public DatabaseException(String message) {
         super(message);
     }

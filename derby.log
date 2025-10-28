@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Tue Oct 28 19:38:35 NZDT 2025:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.17.1.0 - (1913217): instance a816c00e-019a-298a-35a8-00000f38a5b8 
+on database directory C:\Users\lekat\OneDrive\Desktop\PDC-ASSIGNMENT2\PDC-ASSIGNMENT2\CinemaDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e 
+Loaded from file:/C:/Users/lekat/.m2/repository/org/apache/derby/derby/10.17.1.0/derby-10.17.1.0.jar
+java.vendor=Oracle Corporation
+java.runtime.version=21.0.8+12-LTS-250
+user.dir=C:\Users\lekat\OneDrive\Desktop\PDC-ASSIGNMENT2\PDC-ASSIGNMENT2
+os.name=Windows 11
+os.arch=amd64
+os.version=10.0
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

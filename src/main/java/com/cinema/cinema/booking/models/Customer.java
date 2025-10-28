@@ -1,14 +1,18 @@
 package com.cinema.cinema.booking.models;
+import java.time.LocalDateTime;
 
 public class Customer extends User {
     private String phone;
     private int loyaltyPoints;
     private String membershipLevel;
+    private LocalDateTime dateJoined;
+    
     
     public Customer() {
         super();
         this.loyaltyPoints = 0;
         this.membershipLevel = "BRONZE";
+        this.dateJoined = LocalDateTime.now();
     }
     
     public Customer(String username, String password, String firstName, String lastName, 
@@ -17,6 +21,7 @@ public class Customer extends User {
         this.phone = phone;
         this.loyaltyPoints = 0;
         this.membershipLevel = "BRONZE";
+        this.dateJoined = LocalDateTime.now();
     }
     
     public String getPhone() { return phone; }
@@ -27,4 +32,7 @@ public class Customer extends User {
     
     public String getMembershipLevel() { return membershipLevel; }
     public void setMembershipLevel(String membershipLevel) { this.membershipLevel = membershipLevel; }
+    
+    public LocalDateTime getDateJoined() { return dateJoined; }
+    public void setDateJoined(LocalDateTime dateJoined) { this.dateJoined = dateJoined; }
 }

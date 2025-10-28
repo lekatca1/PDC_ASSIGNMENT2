@@ -29,6 +29,8 @@ public class CinemaBookingGUI extends JFrame {
     private static final Color TEXT_PRIMARY = new Color(255, 255, 255);
     private static final Color TEXT_SECONDARY = new Color(174, 174, 178);
     private static final Color BORDER_COLOR = new Color(48, 49, 51);
+    private static final Color BUTTON_GREY = new Color(60, 60, 60);
+    private static final Color BUTTON_GREY_HOVER = new Color(80, 80, 80);
 
     public CinemaBookingGUI(UserManager userManager, PriceCalculator priceCalculator, IncomeTracker incomeTracker, Customer customer) {
         this.userManager = userManager;
@@ -105,10 +107,15 @@ public class CinemaBookingGUI extends JFrame {
         JPanel headerButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         headerButtons.setBackground(SECONDARY_DARK);
 
-        RoundedButton profileBtn = new RoundedButton("Profile", 18, new Color(32, 34, 37), new Color(48, 50, 53));
+        RoundedButton profileBtn = new RoundedButton("Profile", 18, BUTTON_GREY, BUTTON_GREY_HOVER);
         profileBtn.setPreferredSize(new Dimension(90, 36));
-        RoundedButton logoutBtn = new RoundedButton("Logout", 18, new Color(32, 34, 37), new Color(48, 50, 53));
+        RoundedButton logoutBtn = new RoundedButton("Logout", 18, BUTTON_GREY, BUTTON_GREY_HOVER);
         logoutBtn.setPreferredSize(new Dimension(90, 36));
+
+        profileBtn.addActionListener(e -> {
+            this.setVisible(false);
+            SwingUtilities.invokeLater(() -> new ProfilePanel(userManager, priceCalculator, incomeTracker, customer).setVisible(true));
+        });
 
         logoutBtn.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
@@ -214,6 +221,42 @@ public class CinemaBookingGUI extends JFrame {
                 "The reformed criminal animals are back for another hilarious adventure filled with heists, heart, and lots of laughs in this highly anticipated sequel.",
                 "images/badguys2.jpg",
                 "The Bad Guys 2"
+        ));
+        moviesPanel.add(Box.createVerticalStrut(24));
+
+        moviesPanel.add(createModernMovieCard(
+                "Roofman",
+                "102 min • Drama, Comedy",
+                "Based on a true story, a master thief who evaded capture by hiding in department stores and even living on their roofs finds an unlikely path to redemption.",
+                "images/roofman.jpg",
+                "Roofman"
+        ));
+        moviesPanel.add(Box.createVerticalStrut(24));
+
+        moviesPanel.add(createModernMovieCard(
+                "One Battle After Another",
+                "145 min • Action, Drama",
+                "An epic tale of perseverance as a soldier faces relentless challenges across multiple battlefields, fighting not just for survival but for honor and justice.",
+                "images/onebattle.jpg",
+                "One Battle After Another"
+        ));
+        moviesPanel.add(Box.createVerticalStrut(24));
+
+        moviesPanel.add(createModernMovieCard(
+                "Regretting You",
+                "112 min • Romance, Drama",
+                "A poignant story about love, loss, and second chances as a mother and daughter navigate their complex relationship after a life-changing tragedy.",
+                "images/regrettingyou.jpg",
+                "Regretting You"
+        ));
+        moviesPanel.add(Box.createVerticalStrut(24));
+
+        moviesPanel.add(createModernMovieCard(
+                "Chainsaw Man",
+                "125 min • Animation, Action",
+                "Denji, a young man with the power to transform parts of his body into chainsaws, joins a special demon hunting organization to face terrifying threats.",
+                "images/chainsawman.jpg",
+                "Chainsaw Man"
         ));
 
         JScrollPane scrollPane = new JScrollPane(moviesPanel);

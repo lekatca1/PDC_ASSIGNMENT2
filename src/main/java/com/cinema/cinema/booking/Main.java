@@ -1,9 +1,7 @@
 package com.cinema.cinema.booking;
-
 import com.cinema.cinema.booking.database.DatabaseConnection;
 import com.cinema.cinema.booking.gui.LoginPanel;
 import com.cinema.cinema.booking.service.*;
-
 import javax.swing.*;
 
 /**
@@ -14,6 +12,15 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("=== Cinema Booking System - Project 2 ===");
         System.out.println("Initializing application...\n");
+        
+        // TEST: Check if Derby is available
+        try {
+            Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+            System.out.println("✓ Derby driver found!");
+        } catch (ClassNotFoundException e) {
+            System.err.println("❌ Derby driver NOT found in classpath");
+            System.err.println("Classpath: " + System.getProperty("java.class.path"));
+        }
         
         // Initialize database (Singleton pattern)
         try {
@@ -40,6 +47,7 @@ public class Main {
             } catch (Exception e) {
                 // Use default look and feel if system not available
             }
+            
             
             JFrame loginFrame = new JFrame("Cinema Booking System - Login");
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
