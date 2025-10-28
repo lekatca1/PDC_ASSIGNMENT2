@@ -1,41 +1,30 @@
-
-/**
- *
- * @author xps1597
- */
 package com.cinema.cinema.booking.models;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Customer extends User {
-    private String phoneNumber;
-    private List<Booking> bookingHistory;
-    private double totalSpent;
+    private String phone;
+    private int loyaltyPoints;
+    private String membershipLevel;
     
     public Customer() {
         super();
-        this.bookingHistory = new ArrayList<>();
-        this.totalSpent = 0.0;
+        this.loyaltyPoints = 0;
+        this.membershipLevel = "BRONZE";
     }
     
-    public Customer(String username, String password, String email, 
-                   String firstName, String lastName, String phoneNumber) {
+    public Customer(String username, String password, String firstName, String lastName, 
+                   String email, String phone) {
         super(username, password, email, firstName, lastName);
-        this.phoneNumber = phoneNumber;
-        this.bookingHistory = new ArrayList<>();
-        this.totalSpent = 0.0;
+        this.phone = phone;
+        this.loyaltyPoints = 0;
+        this.membershipLevel = "BRONZE";
     }
     
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
     
-    public List<Booking> getBookingHistory() { return bookingHistory; }
-    public void addBooking(Booking booking) { 
-        this.bookingHistory.add(booking);
-        this.totalSpent += booking.getTotalPrice();
-    }
+    public int getLoyaltyPoints() { return loyaltyPoints; }
+    public void setLoyaltyPoints(int loyaltyPoints) { this.loyaltyPoints = loyaltyPoints; }
     
-    public double getTotalSpent() { return totalSpent; }
-    public void setTotalSpent(double totalSpent) { this.totalSpent = totalSpent; }
+    public String getMembershipLevel() { return membershipLevel; }
+    public void setMembershipLevel(String membershipLevel) { this.membershipLevel = membershipLevel; }
 }

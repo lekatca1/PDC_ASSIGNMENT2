@@ -1,13 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.cinema.cinema.booking.models;
-
-/**
- *
- * @author xps1597
- */
 
 import java.time.LocalDateTime;
 
@@ -33,7 +24,6 @@ public abstract class User {
         this.lastName = lastName;
     }
     
-    // Getters and Setters
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
     
