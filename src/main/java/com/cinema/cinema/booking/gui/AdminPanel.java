@@ -1,25 +1,30 @@
-/**
- *
- * @author xps1597
- */
 package com.cinema.cinema.booking.gui;
 
+import com.cinema.cinema.booking.models.Admin;
 import com.cinema.cinema.booking.models.Booking;
 import com.cinema.cinema.booking.service.IncomeTracker;
 import com.cinema.cinema.booking.service.PriceCalculator;
 import com.cinema.cinema.booking.service.UserManager;
+import com.cinema.cinema.booking.dao.BookingDAO;
+import com.cinema.cinema.booking.factory.DAOFactory;
+import com.cinema.cinema.booking.exception.DatabaseException;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AdminPanel extends JFrame {
     private IncomeTracker incomeTracker;
     private JTable reportTable;
     private JLabel totalIncomeLabel;
+    private DefaultTableModel tableModel;
 
     private static final List<AdminPanel> openPanels = new ArrayList<>();
 
@@ -66,16 +71,17 @@ public class AdminPanel extends JFrame {
 
         add(header, BorderLayout.NORTH);
 
-        reportTable = new JTable(new DefaultTableModel(
+        tableModel = new DefaultTableModel(
             new Object[]{"Booking ID", "Customer", "Movie", "Seats", "Revenue", "Date"},
             0
-        ));
+        );
+        reportTable = new JTable(tableModel);
         reportTable.setBackground(FIELD_BG);
         reportTable.setForeground(TEXT_WHITE);
         reportTable.setGridColor(BORDER_COLOR);
         reportTable.setRowHeight(28);
         reportTable.getTableHeader().setBackground(ACCENT_RED);
-        reportTable.getTableHeader().setForeground(TEXT_WHITE);
+        reportTable.getTableHeader().setForeground(BACKGROUND);
         reportTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
 
         JScrollPane scrollPane = new JScrollPane(reportTable);
@@ -117,16 +123,36 @@ public class AdminPanel extends JFrame {
     }
 
     private void loadBookings() {
-        List<Booking> bookings = incomeTracker.getBookings();
-        DefaultTableModel model = (DefaultTableModel) reportTable.getModel();
-        model.setRowCount(0);
-
+        // Load bookings from database
+        List<Booking> bookings = new ArrayList<>();
+        
+        try {
+            // Try to load all bookings from database
+            BookingDAO bookingDAO = DAOFactory.getBookingDAO();
+            bookings = bookingDAO.getAllBookings();
+            
+            System.out.println("✓ Loaded " + bookings.size() + " bookings from database");
+            
+        } catch (DatabaseException e) {
+            System.err.println("Error loading bookings from database: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback to income tracker only
+            bookings = incomeTracker.getBookings();
+        } catch (Exception e) {
+            System.err.println("Unexpected error loading bookings: " + e.getMessage());
+            e.printStackTrace();
+            bookings = incomeTracker.getBookings();
+        }
+        
+        // Clear and populate table
+        tableModel.setRowCount(0);
+        
         double totalIncome = 0.0;
         for (Booking b : bookings) {
-            model.addRow(new Object[]{
+            tableModel.addRow(new Object[]{
                 b.getBookingId(),
-                "Customer " + b.getCustomerId(),
-                "Movie " + b.getShowtimeId(),
+                "Customer #" + b.getCustomerId(),
+                "Showtime #" + b.getShowtimeId(),
                 b.getNumberOfSeats(),
                 String.format("$%.2f", b.getTotalPrice()),
                 b.getBookingDate().toLocalDate().toString()

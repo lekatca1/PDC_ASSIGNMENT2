@@ -8,6 +8,15 @@ import com.cinema.cinema.booking.models.Customer;
 import com.cinema.cinema.booking.models.Booking;
 import com.cinema.cinema.booking.models.Seat;
 import com.cinema.cinema.booking.service.*;
+import com.cinema.cinema.booking.dao.BookingDAO;
+import com.cinema.cinema.booking.factory.DAOFactory;
+import com.cinema.cinema.booking.exception.DatabaseException;
+
+
+import java.sql.Connection;         
+import java.sql.PreparedStatement;  
+import java.sql.ResultSet; 
+import java.sql.SQLException;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
@@ -247,7 +256,7 @@ public class CinemaSeatBookingGUI extends JFrame {
         // Initialize selectedTimeLabel first
         selectedTimeLabel = new JLabel("");
         selectedTimeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        selectedTimeLabel.setForeground(RC_WHITE);
+        selectedTimeLabel.setForeground(RC_GRAY);
         selectedTimeLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         
         // Scrollable showtime container
@@ -739,119 +748,231 @@ public class CinemaSeatBookingGUI extends JFrame {
         return null;
     }
     
-    private void handleBooking() {
-        if (selectedSeats.isEmpty() || selectedShowTime == null) {
-            JOptionPane.showMessageDialog(this,
-                "Please select seats and session time before proceeding.",
-                "Incomplete Selection",
-                JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+private void handleBooking() {
+    if (selectedSeats.isEmpty() || selectedShowTime == null) {
+        JOptionPane.showMessageDialog(this,
+            "Please select seats and session time before proceeding.",
+            "Incomplete Selection",
+            JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    double totalAmount = 0;
+    for (SeatButton seat : selectedSeats) {
+        totalAmount += baseSeatPrice;
+    }
+    
+    // Create RCINEMAS-styled confirmation dialog
+    JPanel confirmPanel = new JPanel();
+    confirmPanel.setLayout(new BoxLayout(confirmPanel, BoxLayout.Y_AXIS));
+    confirmPanel.setBackground(BACKGROUND_SECONDARY);
+    confirmPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    
+    JLabel rcinemasLabel = new JLabel("RCINEMAS");
+    rcinemasLabel.setFont(new Font("Arial", Font.BOLD, 20));
+    rcinemasLabel.setForeground(RC_RED);
+    rcinemasLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+    JLabel titleLabel = new JLabel("CONFIRM YOUR BOOKING");
+    titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+    titleLabel.setForeground(TEXT_PRIMARY);
+    titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+    JLabel movieLabel = new JLabel("Movie: " + movieTitle);
+    movieLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+    movieLabel.setForeground(TEXT_SECONDARY);
+    movieLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+    JLabel timeLabel = new JLabel("Session: " + selectedShowTime.getTime() + " - " + selectedShowTime.getFormat());
+    timeLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+    timeLabel.setForeground(TEXT_SECONDARY);
+    timeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+    JLabel seatsLabel = new JLabel("Seats: " + getSelectedSeatsString());
+    seatsLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+    seatsLabel.setForeground(TEXT_SECONDARY);
+    seatsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+    JLabel totalLabel = new JLabel("Total Amount: $" + String.format("%.2f", totalAmount));
+    totalLabel.setFont(new Font("Arial", Font.BOLD, 15));
+    totalLabel.setForeground(RC_RED);
+    totalLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+    confirmPanel.add(rcinemasLabel);
+    confirmPanel.add(Box.createVerticalStrut(10));
+    confirmPanel.add(titleLabel);
+    confirmPanel.add(Box.createVerticalStrut(15));
+    confirmPanel.add(movieLabel);
+    confirmPanel.add(Box.createVerticalStrut(5));
+    confirmPanel.add(timeLabel);
+    confirmPanel.add(Box.createVerticalStrut(5));
+    confirmPanel.add(seatsLabel);
+    confirmPanel.add(Box.createVerticalStrut(10));
+    confirmPanel.add(totalLabel);
+    
+    int result = JOptionPane.showConfirmDialog(
+        this,
+        confirmPanel,
+        "RCINEMAS - Confirm Booking",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.PLAIN_MESSAGE
+    );
+    
+    if (result == JOptionPane.YES_OPTION) {
+        Connection conn = null;
+        PreparedStatement lookupStmt = null;
         
-        double totalAmount = 0;
-        for (SeatButton seat : selectedSeats) {
-            totalAmount += baseSeatPrice;
-        }
-        
-        // Create RCINEMAS-styled confirmation dialog
-        JPanel confirmPanel = new JPanel();
-        confirmPanel.setLayout(new BoxLayout(confirmPanel, BoxLayout.Y_AXIS));
-        confirmPanel.setBackground(BACKGROUND_SECONDARY);
-        confirmPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        JLabel rcinemasLabel = new JLabel("RCINEMAS");
-        rcinemasLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        rcinemasLabel.setForeground(RC_RED);
-        rcinemasLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        JLabel titleLabel = new JLabel("CONFIRM YOUR BOOKING");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        titleLabel.setForeground(TEXT_PRIMARY);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        JLabel movieLabel = new JLabel("Movie: " + movieTitle);
-        movieLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        movieLabel.setForeground(TEXT_SECONDARY);
-        movieLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        JLabel timeLabel = new JLabel("Session: " + selectedShowTime.getTime() + " - " + selectedShowTime.getFormat());
-        timeLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        timeLabel.setForeground(TEXT_SECONDARY);
-        timeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        JLabel seatsLabel = new JLabel("Seats: " + getSelectedSeatsString());
-        seatsLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        seatsLabel.setForeground(TEXT_SECONDARY);
-        seatsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        JLabel totalLabel = new JLabel("Total Amount: $" + String.format("%.2f", totalAmount));
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 15));
-        totalLabel.setForeground(RC_RED);
-        totalLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        confirmPanel.add(rcinemasLabel);
-        confirmPanel.add(Box.createVerticalStrut(10));
-        confirmPanel.add(titleLabel);
-        confirmPanel.add(Box.createVerticalStrut(15));
-        confirmPanel.add(movieLabel);
-        confirmPanel.add(Box.createVerticalStrut(5));
-        confirmPanel.add(timeLabel);
-        confirmPanel.add(Box.createVerticalStrut(5));
-        confirmPanel.add(seatsLabel);
-        confirmPanel.add(Box.createVerticalStrut(10));
-        confirmPanel.add(totalLabel);
-        
-        int result = JOptionPane.showConfirmDialog(
-            this,
-            confirmPanel,
-            "RCINEMAS - Confirm Booking",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.PLAIN_MESSAGE
-        );
-        
-        if (result == JOptionPane.YES_OPTION) {
-            try {
-                // Create Seat objects for the selected seats
-                List<Seat> bookedSeats = new ArrayList<>();
-                for (SeatButton seatButton : selectedSeats) {
-                    Seat seat = new Seat();
+        try {
+            // Verify customer ID
+            int customerId = customer.getUserId();
+            System.out.println("DEBUG: Customer ID = " + customerId);
+            
+            if (customerId <= 0) {
+                throw new DatabaseException("Invalid customer ID. Please log in again.");
+            }
+            
+            // Create Seat objects with PROPER seat IDs from database lookup
+            List<Seat> bookedSeats = new ArrayList<>();
+            
+            // Get database connection to look up actual seat IDs
+            conn = com.cinema.cinema.booking.database.DatabaseConnection.getInstance().getConnection();
+            
+            // CRITICAL: Use double quotes around ROW_NUMBER (reserved keyword in Derby)
+            String seatLookupSQL = "SELECT seat_id FROM SEATS WHERE screen_id = ? AND \"ROW_NUMBER\" = ? AND seat_number = ?";
+            
+            System.out.println("DEBUG: SQL Query: " + seatLookupSQL);
+            
+            lookupStmt = conn.prepareStatement(seatLookupSQL);
+            
+            for (SeatButton seatButton : selectedSeats) {
+                // Extract row and seat number from button text (e.g., "A1")
+                String seatLabel = seatButton.getSeatId();
+                String rowLetter = seatLabel.substring(0, 1);
+                int seatNumber = Integer.parseInt(seatLabel.substring(1));
+                
+                System.out.println("DEBUG: Looking up seat: " + seatLabel + " (row=" + rowLetter + ", seat=" + seatNumber + ")");
+                
+                // Look up the actual seat_id from the database
+                lookupStmt.setInt(1, 1); // screen_id = 1
+                lookupStmt.setString(2, rowLetter);
+                lookupStmt.setInt(3, seatNumber);
+                
+                ResultSet rs = lookupStmt.executeQuery();
+                
+                if (rs.next()) {
+                    int actualSeatId = rs.getInt("seat_id");
+                    
+                    // Determine seat type based on position
+                    Seat.SeatType seatType = (seatNumber >= 5 && seatNumber <= 6) 
+                        ? Seat.SeatType.VIP 
+                        : Seat.SeatType.STANDARD;
+                    
+                    // Create seat with CORRECT database ID
+                    Seat seat = new Seat(seatLabel, 0, 0, seatType);
+                    seat.setSeatNumber(seatLabel);
+                    seat.setSeatId(actualSeatId);
+                    seat.setShowtimeId(selectedShowTime.getId());
+                    
                     bookedSeats.add(seat);
+                    
+                    System.out.println("DEBUG: Mapped seat " + seatLabel + " to database ID: " + actualSeatId);
+                } else {
+                    throw new DatabaseException("Seat not found in database: " + seatLabel + 
+                        " (row=" + rowLetter + ", seat=" + seatNumber + ")");
                 }
-                
-                // Generate booking ID
-                int bookingId = (int) (System.currentTimeMillis() % 100000);
-                
-                // Create booking
-                Booking booking = new Booking(
-                    bookingId,
-                    selectedShowTime.getId(),
-                    bookedSeats,
-                    totalAmount
-                );
-                
-                // Add booking to income tracker
-                incomeTracker.addBooking(booking);
-                
-                // Show success dialog
-                showRCinemasSuccessDialog(totalAmount);
-                
-                // Return to dashboard
-                this.dispose();
-                SwingUtilities.invokeLater(() -> {
-                    CinemaBookingGUI dashboard = new CinemaBookingGUI(userManager, priceCalculator, incomeTracker, customer);
-                    dashboard.setVisible(true);
-                });
-                
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Error processing booking. Please try again.\nError: " + ex.getMessage(),
-                    "Booking Error",
-                    JOptionPane.ERROR_MESSAGE
-                );
+                rs.close();
+            }
+            
+            // Verify we have seats
+            if (bookedSeats.isEmpty()) {
+                throw new DatabaseException("No seats were found in database");
+            }
+            
+            // Create booking with customer ID
+            Booking booking = new Booking(
+                customerId,
+                selectedShowTime.getId(),
+                bookedSeats,
+                totalAmount
+            );
+            
+            // Set payment details
+            booking.setPaymentMethod("Credit Card");
+            booking.setTransactionId("TXN-" + System.currentTimeMillis());
+            booking.setStatus(Booking.BookingStatus.CONFIRMED);
+            booking.setBookingDate(LocalDateTime.now());
+            
+            System.out.println("DEBUG: Attempting to save booking to database...");
+            System.out.println("DEBUG: Customer ID: " + customerId);
+            System.out.println("DEBUG: Showtime ID: " + selectedShowTime.getId());
+            System.out.println("DEBUG: Number of seats: " + bookedSeats.size());
+            System.out.println("DEBUG: Total Price: " + totalAmount);
+            System.out.println("DEBUG: Booking status: " + booking.getStatus());
+            
+            // Save ONLY to database via DAO
+            BookingDAO bookingDAO = DAOFactory.getBookingDAO();
+            int bookingId = bookingDAO.createBooking(booking);
+            booking.setBookingId(bookingId);
+            
+            System.out.println("✓ Booking saved to database with ID: " + bookingId);
+            
+            // CRITICAL: Don't call incomeTracker.addBooking() - it tries to save again!
+            // Just refresh the UI panels so they reload from database
+            
+            // Force refresh of all open panels
+            System.out.println("DEBUG: Refreshing all open panels...");
+            SwingUtilities.invokeLater(() -> {
+                AdminPanel.refreshAllOpenPanels(true);
+                ProfilePanel.refreshAllOpenPanels();
+            });
+            
+            // Show success dialog
+            showRCinemasSuccessDialog(totalAmount);
+            
+            // Return to dashboard
+            this.dispose();
+            SwingUtilities.invokeLater(() -> {
+                CinemaBookingGUI dashboard = new CinemaBookingGUI(userManager, priceCalculator, incomeTracker, customer);
+                dashboard.setVisible(true);
+            });
+            
+        } catch (DatabaseException ex) {
+            System.err.println("Database error during booking: " + ex.getMessage());
+            JOptionPane.showMessageDialog(
+                this,
+                "Database error: " + ex.getMessage(),
+                "Booking Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+            ex.printStackTrace();
+        } catch (SQLException ex) {
+            System.err.println("SQL error during booking: " + ex.getMessage());
+            JOptionPane.showMessageDialog(
+                this,
+                "Database error: " + ex.getMessage(),
+                "Booking Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+            ex.printStackTrace();
+        } catch (Exception ex) {
+            System.err.println("Unexpected error during booking: " + ex.getMessage());
+            JOptionPane.showMessageDialog(
+                this,
+                "Error processing booking. Please try again.\nError: " + ex.getMessage(),
+                "Booking Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+            ex.printStackTrace();
+        } finally {
+            // Clean up database resources
+            try {
+                if (lookupStmt != null) lookupStmt.close();
+            } catch (Exception e) {
+                System.err.println("Error closing statement: " + e.getMessage());
             }
         }
     }
+}
     
     private void showRCinemasSuccessDialog(double totalAmount) {
         JPanel successPanel = new JPanel();
@@ -928,7 +1049,7 @@ public class CinemaSeatBookingGUI extends JFrame {
     // Button styling methods
     private void styleRCPrimaryButton(JButton button) {
         button.setBackground(RC_BLACK);
-        button.setForeground(TEXT_PRIMARY);
+        button.setForeground(TEXT_SECONDARY);
         button.setFont(new Font("Arial", Font.BOLD, 13));
         button.setBorder(BorderFactory.createLineBorder(TEXT_PRIMARY, 2));
         button.setFocusPainted(false);

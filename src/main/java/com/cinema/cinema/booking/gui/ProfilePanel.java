@@ -24,6 +24,7 @@ public class ProfilePanel extends JFrame {
     private PriceCalculator priceCalculator;
     private IncomeTracker incomeTracker;
     private Customer customer;
+    private static final List<ProfilePanel> openPanels = new ArrayList<>();
 
     // Modern color palette
     private static final Color PRIMARY_DARK = new Color(12, 12, 14);
@@ -79,6 +80,22 @@ public class ProfilePanel extends JFrame {
         // Refresh the display
         revalidate();
         repaint();
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        super.setVisible(b);
+        if (b) {
+            openPanels.add(this);
+        } else {
+            openPanels.remove(this);
+        }
+    }
+
+    public static void refreshAllOpenPanels() {
+        for (ProfilePanel panel : openPanels) {
+            panel.refreshProfileData();
+        }
     }
 
     private void createUI() {
