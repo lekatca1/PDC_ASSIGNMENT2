@@ -1,4 +1,3 @@
-
 /**
  *
  * @author xps1597
@@ -7,7 +6,7 @@ package com.cinema.cinema.booking.models;
 
 public class Seat {
     public enum SeatType {
-        REGULAR, PREMIUM, VIP
+        STANDARD, REGULAR, PREMIUM, VIP
     }
     
     public enum SeatStatus {
@@ -24,7 +23,7 @@ public class Seat {
     
     public Seat() {
         this.status = SeatStatus.AVAILABLE;
-        this.seatType = SeatType.REGULAR;
+        this.seatType = SeatType.STANDARD;
     }
     
     public Seat(String seatNumber, int row, int column, SeatType seatType) {

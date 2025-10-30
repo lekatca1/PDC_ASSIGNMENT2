@@ -29,9 +29,10 @@ public class Booking {
     
     public Booking() {
         this.bookingDate = LocalDateTime.now();
-        this.status = BookingStatus.PENDING;
+        this.status = BookingStatus.CONFIRMED;
     }
     
+    // Constructor for database operations (with customerId)
     public Booking(int customerId, int showtimeId, List<Seat> bookedSeats, double totalPrice) {
         this();
         this.customerId = customerId;
