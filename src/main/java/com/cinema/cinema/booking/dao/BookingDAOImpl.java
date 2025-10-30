@@ -136,27 +136,61 @@ public class BookingDAOImpl implements BookingDAO {
         }
     }
     
-private List<Seat> getSeatsForBooking(int bookingId, Connection conn) throws SQLException {
-    List<Seat> seats = new ArrayList<>();
-    String sql = "SELECT s.* FROM SEATS s " +
-                 "JOIN BOOKING_SEATS bs ON s.seat_id = bs.seat_id " +
-                 "WHERE bs.booking_id = ?";
-    
-    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-        stmt.setInt(1, bookingId);
-        ResultSet rs = stmt.executeQuery();
+    @Override
+    public List<Booking> getAllBookings() throws DatabaseException {
+        List<Booking> bookings = new ArrayList<>();
+        String sql = "SELECT * FROM BOOKINGS ORDER BY booking_date DESC";
         
-        while (rs.next()) {
-            Seat seat = new Seat();
-            seat.setSeatId(rs.getInt("seat_id"));
-            seat.setSeatNumber(rs.getString("seat_number"));
-            seat.setSeatType(Seat.SeatType.valueOf(rs.getString("seat_type")));
-            seats.add(seat);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Booking booking = new Booking();
+                booking.setBookingId(rs.getInt("booking_id"));
+                booking.setCustomerId(rs.getInt("customer_id"));
+                booking.setShowtimeId(rs.getInt("showtime_id"));
+                booking.setTotalPrice(rs.getDouble("total_price"));
+                booking.setBookingDate(rs.getTimestamp("booking_date").toLocalDateTime());
+                booking.setStatus(Booking.BookingStatus.valueOf(rs.getString("status")));
+                booking.setPaymentMethod(rs.getString("payment_method"));
+                booking.setTransactionId(rs.getString("transaction_id"));
+                
+                // Get seats for this booking
+                booking.setBookedSeats(getSeatsForBooking(booking.getBookingId(), conn));
+                
+                bookings.add(booking);
+            }
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error retrieving all bookings: " + e.getMessage(), e);
         }
+        
+        return bookings;
     }
     
-    return seats;
-}
+    private List<Seat> getSeatsForBooking(int bookingId, Connection conn) throws SQLException {
+        List<Seat> seats = new ArrayList<>();
+        String sql = "SELECT s.* FROM SEATS s " +
+                     "JOIN BOOKING_SEATS bs ON s.seat_id = bs.seat_id " +
+                     "WHERE bs.booking_id = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bookingId);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Seat seat = new Seat();
+                seat.setSeatId(rs.getInt("seat_id"));
+                seat.setSeatNumber(rs.getString("row_number") + rs.getInt("seat_number"));
+                seat.setSeatType(Seat.SeatType.valueOf(rs.getString("seat_type")));
+                seats.add(seat);
+            }
+        }
+        
+        return seats;
+    }
     
     private void insertBookingSeats(int bookingId, List<Seat> seats, Connection conn) throws SQLException {
         String sql = "INSERT INTO BOOKING_SEATS (booking_id, seat_id, price) VALUES (?, ?, ?)";
@@ -165,7 +199,7 @@ private List<Seat> getSeatsForBooking(int bookingId, Connection conn) throws SQL
             for (Seat seat : seats) {
                 stmt.setInt(1, bookingId);
                 stmt.setInt(2, seat.getSeatId());
-                stmt.setDouble(3, 12.50); // You can calculate actual price
+                stmt.setDouble(3, 12.50);
                 stmt.addBatch();
             }
             stmt.executeBatch();

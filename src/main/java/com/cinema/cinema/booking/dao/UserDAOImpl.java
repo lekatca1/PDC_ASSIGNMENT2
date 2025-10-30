@@ -1,203 +1,434 @@
 package com.cinema.cinema.booking.dao;
 
 import com.cinema.cinema.booking.database.DatabaseConnection;
-import com.cinema.cinema.booking.models.*;
+import com.cinema.cinema.booking.exception.DatabaseException;
+import com.cinema.cinema.booking.models.Admin;
+import com.cinema.cinema.booking.models.Customer;
+import com.cinema.cinema.booking.models.User;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementation of UserDAO interface
+ * Handles all database operations for User entities
+ * @author xps1597
+ */
 public class UserDAOImpl implements UserDAO {
-    private final Connection connection;
     
-    public UserDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
-    }
-    
+    /**
+     * Find a user by their ID
+     * @param userId User ID to search for
+     * @return Optional containing User if found, empty otherwise
+     */
     @Override
     public Optional<User> findById(int userId) {
         String sql = "SELECT * FROM USERS WHERE user_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return Optional.of(mapResultSetToUser(rs));
+            
+            if (rs.next()) {
+                String userType = rs.getString("user_type");
+                
+                if ("CUSTOMER".equals(userType)) {
+                    Customer customer = new Customer(
+                        rs.getInt("user_id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email"),
+                        rs.getString("phone")
+                    );
+                    customer.setUserType(userType);
+                    return Optional.of(customer);
+                    
+                } else if ("ADMIN".equals(userType)) {
+                    Admin admin = new Admin(
+                        rs.getInt("user_id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email"),
+                        rs.getString("role"),
+                        rs.getString("department")
+                    );
+                    admin.setUserType(userType);
+                    return Optional.of(admin);
+                }
+            }
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error finding user by ID: " + e.getMessage());
+            e.printStackTrace();
         }
+        
         return Optional.empty();
     }
     
+    /**
+     * Find a user by username
+     * @param username Username to search for
+     * @return Optional containing User if found, empty otherwise
+     */
     @Override
     public Optional<User> findByUsername(String username) {
         String sql = "SELECT * FROM USERS WHERE username = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return Optional.of(mapResultSetToUser(rs));
+            
+            if (rs.next()) {
+                String userType = rs.getString("user_type");
+                int userId = rs.getInt("user_id");
+                
+                if ("CUSTOMER".equals(userType)) {
+                    Customer customer = new Customer(
+                        userId,
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email"),
+                        rs.getString("phone")
+                    );
+                    customer.setUserType(userType);
+                    System.out.println("✓ Loaded customer from database with ID: " + userId);
+                    return Optional.of(customer);
+                    
+                } else if ("ADMIN".equals(userType)) {
+                    Admin admin = new Admin(
+                        userId,
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email"),
+                        rs.getString("role"),
+                        rs.getString("department")
+                    );
+                    admin.setUserType(userType);
+                    System.out.println("✓ Loaded admin from database with ID: " + userId);
+                    return Optional.of(admin);
+                }
+            }
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error finding user by username: " + e.getMessage());
+            e.printStackTrace();
         }
+        
         return Optional.empty();
     }
     
+    /**
+     * Authenticate user credentials
+     * @param username Username to authenticate
+     * @param password Password to verify
+     * @return Optional containing User if credentials are valid, empty otherwise
+     */
     @Override
     public Optional<User> authenticate(String username, String password) {
-        String sql = "SELECT * FROM USERS WHERE username = ? AND password = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return Optional.of(mapResultSetToUser(rs));
-        } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+        Optional<User> userOpt = findByUsername(username);
+        
+        if (userOpt.isPresent() && userOpt.get().getPassword().equals(password)) {
+            System.out.println("✓ User authenticated successfully: " + username);
+            return userOpt;
         }
+        
+        System.out.println("✗ Authentication failed for username: " + username);
         return Optional.empty();
     }
     
+    /**
+     * Save a new user to the database
+     * @param user User object to save (Customer or Admin)
+     * @return true if save was successful, false otherwise
+     */
     @Override
     public boolean save(User user) {
-        if (user instanceof Customer) return saveCustomer((Customer) user);
-        else if (user instanceof Admin) return saveAdmin((Admin) user);
-        return false;
-    }
-    
-    private boolean saveCustomer(Customer customer) {
-        String sql = "INSERT INTO USERS (username, password, email, first_name, last_name, user_type, phone) " +
-                     "VALUES (?, ?, ?, ?, ?, 'CUSTOMER', ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, customer.getUsername());
-            stmt.setString(2, customer.getPassword());
-            stmt.setString(3, customer.getEmail());
-            stmt.setString(4, customer.getFirstName());
-            stmt.setString(5, customer.getLastName());
-            stmt.setString(6, customer.getPhone());
-            int rows = stmt.executeUpdate();
-            if (rows > 0) {
-                ResultSet rs = stmt.getGeneratedKeys();
-                if (rs.next()) customer.setUserId(rs.getInt(1));
-                return true;
+        String sql = "INSERT INTO USERS (username, password, email, first_name, last_name, user_type, phone, role, department) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            // Set common fields
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getPassword());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getFirstName());
+            stmt.setString(5, user.getLastName());
+            stmt.setString(6, user.getUserType());
+            
+            // Set type-specific fields
+            if (user instanceof Customer) {
+                Customer customer = (Customer) user;
+                stmt.setString(7, customer.getPhone());
+                stmt.setNull(8, Types.VARCHAR);  // role is null for customers
+                stmt.setNull(9, Types.VARCHAR);  // department is null for customers
+            } else if (user instanceof Admin) {
+                Admin admin = (Admin) user;
+                stmt.setNull(7, Types.VARCHAR);  // phone is null for admins
+                stmt.setString(8, admin.getRole());
+                stmt.setString(9, admin.getDepartment());
+            } else {
+                // Default user
+                stmt.setNull(7, Types.VARCHAR);
+                stmt.setNull(8, Types.VARCHAR);
+                stmt.setNull(9, Types.VARCHAR);
             }
-        } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-        return false;
-    }
-    
-    private boolean saveAdmin(Admin admin) {
-        String sql = "INSERT INTO USERS (username, password, email, first_name, last_name, user_type, role, department) " +
-                     "VALUES (?, ?, ?, ?, ?, 'ADMIN', ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, admin.getUsername());
-            stmt.setString(2, admin.getPassword());
-            stmt.setString(3, admin.getEmail());
-            stmt.setString(4, admin.getFirstName());
-            stmt.setString(5, admin.getLastName());
-            stmt.setString(6, admin.getRole());
-            stmt.setString(7, admin.getDepartment());
-            int rows = stmt.executeUpdate();
-            if (rows > 0) {
-                ResultSet rs = stmt.getGeneratedKeys();
-                if (rs.next()) admin.setUserId(rs.getInt(1));
-                return true;
+            
+            // Execute insert
+            int affectedRows = stmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                return false;
             }
+            
+            // Get generated user ID
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int userId = generatedKeys.getInt(1);
+                    user.setUserId(userId);  // Set the ID in the user object
+                    
+                    System.out.println("✓ Created user in database with ID: " + userId);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error creating user: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
     
+    /**
+     * Update an existing user in the database
+     * @param user User object with updated information
+     * @return true if update was successful, false otherwise
+     */
     @Override
     public boolean update(User user) {
-        String sql = "UPDATE USERS SET username=?, email=?, first_name=?, last_name=? WHERE user_id=?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        String sql = "UPDATE USERS SET username = ?, password = ?, email = ?, " +
+                     "first_name = ?, last_name = ?, phone = ?, role = ?, department = ? " +
+                     "WHERE user_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getFirstName());
-            stmt.setString(4, user.getLastName());
-            stmt.setInt(5, user.getUserId());
-            return stmt.executeUpdate() > 0;
+            stmt.setString(2, user.getPassword());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getFirstName());
+            stmt.setString(5, user.getLastName());
+            
+            // Set type-specific fields
+            if (user instanceof Customer) {
+                Customer customer = (Customer) user;
+                stmt.setString(6, customer.getPhone());
+                stmt.setNull(7, Types.VARCHAR);
+                stmt.setNull(8, Types.VARCHAR);
+            } else if (user instanceof Admin) {
+                Admin admin = (Admin) user;
+                stmt.setNull(6, Types.VARCHAR);
+                stmt.setString(7, admin.getRole());
+                stmt.setString(8, admin.getDepartment());
+            } else {
+                stmt.setNull(6, Types.VARCHAR);
+                stmt.setNull(7, Types.VARCHAR);
+                stmt.setNull(8, Types.VARCHAR);
+            }
+            
+            stmt.setInt(9, user.getUserId());
+            
+            int affectedRows = stmt.executeUpdate();
+            
+            System.out.println("✓ Updated user in database with ID: " + user.getUserId());
+            
+            return affectedRows > 0;
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error updating user: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
     
+    /**
+     * Delete a user from the database
+     * @param userId ID of user to delete
+     * @return true if deletion was successful, false otherwise
+     */
     @Override
     public boolean delete(int userId) {
         String sql = "DELETE FROM USERS WHERE user_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
             stmt.setInt(1, userId);
-            return stmt.executeUpdate() > 0;
+            
+            int affectedRows = stmt.executeUpdate();
+            
+            System.out.println("✓ Deleted user from database with ID: " + userId);
+            
+            return affectedRows > 0;
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error deleting user: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
+    }
+    
+    /**
+     * Check if a username already exists in the database
+     * @param username Username to check
+     * @return true if username exists, false otherwise
+     */
+    @Override
+    public boolean usernameExists(String username) {
+        String sql = "SELECT COUNT(*) FROM USERS WHERE username = ?";
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error checking username: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return false;
     }
     
+    /**
+     * Check if an email already exists in the database
+     * @param email Email to check
+     * @return true if email exists, false otherwise
+     */
     @Override
-    public List<Customer> getAllCustomers() {
-        List<Customer> customers = new ArrayList<>();
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM USERS WHERE user_type='CUSTOMER'")) {
-            while (rs.next()) customers.add((Customer) mapResultSetToUser(rs));
+    public boolean emailExists(String email) {
+        String sql = "SELECT COUNT(*) FROM USERS WHERE email = ?";
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error checking email: " + e.getMessage());
+            e.printStackTrace();
         }
-        return customers;
+        
+        return false;
     }
     
+    /**
+     * Get all admin users from the database
+     * @return List of Admin objects
+     */
     @Override
     public List<Admin> getAllAdmins() {
         List<Admin> admins = new ArrayList<>();
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM USERS WHERE user_type='ADMIN'")) {
-            while (rs.next()) admins.add((Admin) mapResultSetToUser(rs));
+        String sql = "SELECT * FROM USERS WHERE user_type = 'ADMIN' ORDER BY username";
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                int userId = rs.getInt("user_id");
+                
+                Admin admin = new Admin(
+                    userId,
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("email"),
+                    rs.getString("role"),
+                    rs.getString("department")
+                );
+                
+                admin.setUserType("ADMIN");
+                admins.add(admin);
+            }
+            
+            System.out.println("✓ Loaded " + admins.size() + " admins from database");
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error retrieving admins: " + e.getMessage());
+            e.printStackTrace();
         }
+        
         return admins;
     }
     
+    /**
+     * Get all customer users from the database
+     * @return List of Customer objects
+     */
     @Override
-    public boolean usernameExists(String username) {
-        return findByUsername(username).isPresent();
-    }
-    
-    @Override
-    public boolean emailExists(String email) {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM USERS WHERE email=?")) {
-            stmt.setString(1, email);
+    public List<Customer> getAllCustomers() {
+        List<Customer> customers = new ArrayList<>();
+        String sql = "SELECT * FROM USERS WHERE user_type = 'CUSTOMER' ORDER BY username";
+        
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
+            
+            while (rs.next()) {
+                int userId = rs.getInt("user_id");
+                
+                Customer customer = new Customer(
+                    userId,
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("email"),
+                    rs.getString("phone")
+                );
+                
+                customer.setUserType("CUSTOMER");
+                customers.add(customer);
+            }
+            
+            System.out.println("✓ Loaded " + customers.size() + " customers from database");
+            
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error retrieving customers: " + e.getMessage());
+            e.printStackTrace();
         }
-        return false;
-    }
-    
-    private User mapResultSetToUser(ResultSet rs) throws SQLException {
-        String userType = rs.getString("user_type");
-        if ("CUSTOMER".equals(userType)) {
-            Customer c = new Customer();
-            c.setUserId(rs.getInt("user_id"));
-            c.setUsername(rs.getString("username"));
-            c.setPassword(rs.getString("password"));
-            c.setEmail(rs.getString("email"));
-            c.setFirstName(rs.getString("first_name"));
-            c.setLastName(rs.getString("last_name"));
-            c.setPhone(rs.getString("phone"));
-            return c;
-        } else {
-            Admin a = new Admin();
-            a.setUserId(rs.getInt("user_id"));
-            a.setUsername(rs.getString("username"));
-            a.setPassword(rs.getString("password"));
-            a.setEmail(rs.getString("email"));
-            a.setFirstName(rs.getString("first_name"));
-            a.setLastName(rs.getString("last_name"));
-            a.setRole(rs.getString("role"));
-            a.setDepartment(rs.getString("department"));
-            return a;
-        }
+        
+        return customers;
     }
 }

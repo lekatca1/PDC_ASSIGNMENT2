@@ -9,4 +9,5 @@ public interface BookingDAO {
     Booking getBookingById(int bookingId) throws DatabaseException;
     int createBooking(Booking booking) throws DatabaseException;
     boolean updateBookingStatus(int bookingId, Booking.BookingStatus status) throws DatabaseException;
+    List<Booking> getAllBookings() throws DatabaseException;
 }
