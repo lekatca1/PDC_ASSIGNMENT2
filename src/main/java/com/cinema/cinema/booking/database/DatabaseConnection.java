@@ -3,12 +3,21 @@ package com.cinema.cinema.booking.database;
 import java.sql.*;
 import java.io.File;
 
+/**
+ * DatabaseConnection - Singleton class for managing database connection
+ * Handles Derby embedded database initialization and connection management
+ * @author xps1597
+ */
 public class DatabaseConnection {
     private static DatabaseConnection instance;
     private Connection connection;
     private static final String DB_NAME = "CinemaDB";
     private static final String DB_URL = "jdbc:derby:" + DB_NAME + ";create=true";
     
+    /**
+     * Private constructor - Singleton pattern
+     * Initializes database connection and creates schema if needed
+     */
     private DatabaseConnection() {
         try {
             // Check if database is locked and clean up if needed
@@ -43,6 +52,10 @@ public class DatabaseConnection {
         }
     }
     
+    /**
+     * Clean up stale lock files from previous database sessions
+     * Helps recover from improper shutdowns
+     */
     private void cleanupLockFiles() {
         try {
             File dbDir = new File(DB_NAME);
@@ -69,6 +82,10 @@ public class DatabaseConnection {
         }
     }
     
+    /**
+     * Get singleton instance of DatabaseConnection
+     * @return DatabaseConnection instance
+     */
     public static synchronized DatabaseConnection getInstance() {
         if (instance == null) {
             instance = new DatabaseConnection();
@@ -76,6 +93,11 @@ public class DatabaseConnection {
         return instance;
     }
     
+    /**
+     * Get active database connection
+     * Reopens connection if it was closed
+     * @return Active Connection object
+     */
     public Connection getConnection() {
         try {
             if (connection == null || connection.isClosed()) {
@@ -87,6 +109,11 @@ public class DatabaseConnection {
         return connection;
     }
     
+    /**
+     * Initialize database schema
+     * Creates all tables if they don't exist
+     * Only runs once when database is first created
+     */
     private void initializeDatabase() {
         try {
             Statement stmt = connection.createStatement();
@@ -116,6 +143,7 @@ public class DatabaseConnection {
                 "created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")"
             );
+            System.out.println("✓ USERS table created");
             
             // Create MOVIES table
             stmt.execute(
@@ -133,8 +161,9 @@ public class DatabaseConnection {
                 "is_active BOOLEAN DEFAULT TRUE" +
                 ")"
             );
+            System.out.println("✓ MOVIES table created");
             
-            // Create SCREENS table - FIXED: renamed 'rows' and 'columns' to avoid reserved keywords
+            // Create SCREENS table
             stmt.execute(
                 "CREATE TABLE SCREENS (" +
                 "screen_id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1) PRIMARY KEY, " +
@@ -146,6 +175,7 @@ public class DatabaseConnection {
                 "is_active BOOLEAN DEFAULT TRUE" +
                 ")"
             );
+            System.out.println("✓ SCREENS table created");
             
             // Create SEATS table
             stmt.execute(
@@ -160,6 +190,7 @@ public class DatabaseConnection {
                 "UNIQUE (screen_id, row_number, seat_number)" +
                 ")"
             );
+            System.out.println("✓ SEATS table created");
             
             // Create SHOWTIMES table
             stmt.execute(
@@ -176,6 +207,7 @@ public class DatabaseConnection {
                 "FOREIGN KEY (screen_id) REFERENCES SCREENS(screen_id)" +
                 ")"
             );
+            System.out.println("✓ SHOWTIMES table created");
             
             // Create BOOKINGS table
             stmt.execute(
@@ -192,6 +224,7 @@ public class DatabaseConnection {
                 "FOREIGN KEY (showtime_id) REFERENCES SHOWTIMES(showtime_id)" +
                 ")"
             );
+            System.out.println("✓ BOOKINGS table created");
             
             // Create BOOKING_SEATS table
             stmt.execute(
@@ -204,6 +237,7 @@ public class DatabaseConnection {
                 "FOREIGN KEY (seat_id) REFERENCES SEATS(seat_id)" +
                 ")"
             );
+            System.out.println("✓ BOOKING_SEATS table created");
             
             stmt.close();
             System.out.println("✓ Database schema created successfully");
@@ -211,25 +245,35 @@ public class DatabaseConnection {
             
         } catch (SQLException e) {
             System.err.println("❌ Failed to initialize database: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Database initialization error", e);
         }
     }
     
+    /**
+     * Insert default data into database
+     * Creates default users, movies, screens, seats, and showtimes
+     * CRITICAL: Creates 7 showtimes to match GUI expectations (showtime IDs 1-7)
+     */
     private void insertDefaultData() {
         try {
             Statement stmt = connection.createStatement();
             
-            // Insert default admin
+            System.out.println("Inserting default data...");
+            
+            // Insert default admin (user_id will be 1)
             stmt.execute(
                 "INSERT INTO USERS (username, password, email, first_name, last_name, user_type, role, department) " +
                 "VALUES ('admin', 'admin123', 'admin@cinema.com', 'System', 'Administrator', 'ADMIN', 'SUPER_ADMIN', 'Management')"
             );
+            System.out.println("✓ Default admin created");
             
-            // Insert default customer
+            // Insert default customer (user_id will be 2)
             stmt.execute(
                 "INSERT INTO USERS (username, password, email, first_name, last_name, user_type, phone) " +
                 "VALUES ('rob', 'rob', 'rob@cinema.com', 'Rob', 'Customer', 'CUSTOMER', '1234567890')"
             );
+            System.out.println("✓ Default customer 'rob' created");
             
             // Insert sample movies
             stmt.execute(
@@ -249,47 +293,94 @@ public class DatabaseConnection {
                 "VALUES ('Superman', 'The Man of Steel protects Earth.', " +
                 "'Action', 140, 'PG-13', '2025-07-11', 'James Gunn', 'David Corenswet, Rachel Brosnahan')"
             );
+            System.out.println("✓ Sample movies created");
             
-            // Insert screens - FIXED: using num_rows and num_columns
+            // Insert screens
             stmt.execute("INSERT INTO SCREENS (screen_number, screen_name, total_seats, num_rows, num_columns) VALUES (1, 'Screen 1', 50, 5, 10)");
             stmt.execute("INSERT INTO SCREENS (screen_number, screen_name, total_seats, num_rows, num_columns) VALUES (2, 'Screen 2', 60, 6, 10)");
+            System.out.println("✓ Screens created");
             
-            // Insert seats for Screen 1
-            String[] rows = {"A", "B", "C", "D", "E"};
-            for (String row : rows) {
-                for (int seat = 1; seat <= 10; seat++) {
-                    String seatType = (seat >= 5 && seat <= 6) ? "VIP" : "STANDARD";
-                    stmt.execute(
-                        "INSERT INTO SEATS (screen_id, row_number, seat_number, seat_type) " +
-                        "VALUES (1, '" + row + "', " + seat + ", '" + seatType + "')"
-                    );
-                }
-            }
+// Insert seats for Screen 1 - EXPANDED to match GUI
+// GUI shows: A(12), B(14), C(16), D(16), E(18), F(18), G(18), H(18), J(20), K(20)
+        String[] rows = {"A", "B", "C", "D", "E", "F", "G", "H", "J", "K"};
+        int[] seatsPerRow = {12, 14, 16, 16, 18, 18, 18, 18, 20, 20};
+
+         for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+          String row = rows[rowIndex];
+    int numSeats = seatsPerRow[rowIndex];
+    
+    for (int seat = 1; seat <= numSeats; seat++) {
+        // VIP seats are positions 5-6 in each row
+        String seatType = (seat >= 5 && seat <= 6) ? "VIP" : "STANDARD";
+        stmt.execute(
+            "INSERT INTO SEATS (screen_id, row_number, seat_number, seat_type) " +
+            "VALUES (1, '" + row + "', " + seat + ", '" + seatType + "')"
+        );
+    }
+}
+System.out.println("✓ Seats created for Screen 1 (170 total seats)");
             
-            // Insert sample showtimes
+            // CRITICAL: Insert 7 showtimes to match GUI expectations (showtime IDs 1-7)
+            // The GUI uses hardcoded showtime IDs from 1-7
+            System.out.println("Creating 7 showtimes for GUI compatibility...");
+            
+            // Showtime 1: 10:00 AM - Morning show
             stmt.execute(
                 "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
-                "VALUES (1, 1, '2025-10-25', '14:00:00', 12.50, 50)"
+                "VALUES (1, 1, '2025-10-29', '10:00:00', 25.00, 50)"
             );
             
+            // Showtime 2: 12:30 PM - Lunch time
             stmt.execute(
                 "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
-                "VALUES (1, 1, '2025-10-25', '17:30:00', 15.00, 50)"
+                "VALUES (1, 1, '2025-10-29', '12:30:00', 28.00, 50)"
             );
             
+            // Showtime 3: 3:00 PM - Afternoon matinee
             stmt.execute(
                 "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
-                "VALUES (2, 1, '2025-10-26', '19:00:00', 15.00, 50)"
+                "VALUES (1, 1, '2025-10-29', '15:00:00', 19.50, 50)"
             );
+            
+            // Showtime 4: 5:30 PM - Early evening
+            stmt.execute(
+                "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
+                "VALUES (1, 1, '2025-10-29', '17:30:00', 22.00, 50)"
+            );
+            
+            // Showtime 5: 8:00 PM - Prime time
+            stmt.execute(
+                "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
+                "VALUES (1, 1, '2025-10-29', '20:00:00', 25.00, 50)"
+            );
+            
+            // Showtime 6: 10:30 PM - Late night
+            stmt.execute(
+                "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
+                "VALUES (1, 1, '2025-10-29', '22:30:00', 19.50, 50)"
+            );
+            
+            // Showtime 7: 11:59 PM - Midnight show
+            stmt.execute(
+                "INSERT INTO SHOWTIMES (movie_id, screen_id, show_date, show_time, price, available_seats) " +
+                "VALUES (1, 1, '2025-10-29', '23:59:00', 16.50, 50)"
+            );
+            
+            System.out.println("✓ All 7 showtimes created (IDs 1-7)");
             
             stmt.close();
             System.out.println("✓ Default data inserted successfully");
             
         } catch (SQLException e) {
             System.err.println("❌ Failed to insert default data: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
+    /**
+     * Close database connection
+     * Should be called when application shuts down
+     */
     public void closeConnection() {
         try {
             if (connection != null && !connection.isClosed()) {
@@ -301,6 +392,10 @@ public class DatabaseConnection {
         }
     }
     
+    /**
+     * Shutdown Derby database
+     * Should be called when application exits
+     */
     public static void shutdown() {
         try {
             DriverManager.getConnection("jdbc:derby:;shutdown=true");
