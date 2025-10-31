@@ -73,7 +73,7 @@ public class CinemaBookingGUI extends JFrame {
         sidebar.add(brandPanel);
         sidebar.add(Box.createVerticalStrut(40));
 
-        String[] menuItems = {"Movies", "Session Times"};
+        String[] menuItems = {"Movies"};
         for (int i = 0; i < menuItems.length; i++) {
             RoundedButton btn = new RoundedButton(menuItems[i], 14,
                     (i == 0 ? new Color(32, 34, 37) : SECONDARY_DARK),
@@ -90,61 +90,63 @@ public class CinemaBookingGUI extends JFrame {
         return sidebar;
     }
 
-    private JPanel createModernHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(SECONDARY_DARK);
-        header.setPreferredSize(new Dimension(0, 70));
-        header.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+private JPanel createModernHeader() {
+    JPanel header = new JPanel(new BorderLayout());
+    header.setBackground(SECONDARY_DARK);
+    header.setPreferredSize(new Dimension(0, 70));
+    header.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
-        JPanel welcomePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        welcomePanel.setBackground(SECONDARY_DARK);
-        String userName = (customer != null) ? customer.getFirstName() : "Guest";
-        JLabel welcomeLabel = new JLabel("Welcome, " + userName);
-        welcomeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        welcomeLabel.setForeground(TEXT_PRIMARY);
-        welcomePanel.add(welcomeLabel);
+    JPanel welcomePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    welcomePanel.setBackground(SECONDARY_DARK);
+    String userName = (customer != null) ? customer.getFirstName() : "Guest";
+    JLabel welcomeLabel = new JLabel("Welcome, " + userName);
+    welcomeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+    welcomeLabel.setForeground(TEXT_PRIMARY);
+    welcomePanel.add(welcomeLabel);
 
-        JPanel headerButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        headerButtons.setBackground(SECONDARY_DARK);
+    JPanel headerButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+    headerButtons.setBackground(SECONDARY_DARK);
 
-        RoundedButton profileBtn = new RoundedButton("Profile", 18, BUTTON_GREY, BUTTON_GREY_HOVER);
-        profileBtn.setPreferredSize(new Dimension(90, 36));
-        RoundedButton logoutBtn = new RoundedButton("Logout", 18, BUTTON_GREY, BUTTON_GREY_HOVER);
-        logoutBtn.setPreferredSize(new Dimension(90, 36));
+// Changed to RoundedButton with higher radius for fully rounded corners
+    RoundedButton profileBtn = new RoundedButton("Profile", 36, BUTTON_GREY, BUTTON_GREY_HOVER);
+    profileBtn.setPreferredSize(new Dimension(90, 36));
 
-        profileBtn.addActionListener(e -> {
-            this.setVisible(false);
-            SwingUtilities.invokeLater(() -> new ProfilePanel(userManager, priceCalculator, incomeTracker, customer).setVisible(true));
-        });
+    RoundedButton logoutBtn = new RoundedButton("Logout", 36, BUTTON_GREY, BUTTON_GREY_HOVER);
+    logoutBtn.setPreferredSize(new Dimension(90, 36));
 
-        logoutBtn.addActionListener(e -> {
-            int result = JOptionPane.showConfirmDialog(
-                    this,
-                    "Are you sure you want to logout?",
-                    "Confirm Logout",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
-            );
-            if (result == JOptionPane.YES_OPTION) {
-                this.dispose();
-                SwingUtilities.invokeLater(() -> {
-                    JFrame loginFrame = new JFrame("Cinema Login");
-                    loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    loginFrame.setSize(400, 350);
-                    loginFrame.setLocationRelativeTo(null);
-                    loginFrame.add(new LoginPanel(userManager, priceCalculator, incomeTracker));
-                    loginFrame.setVisible(true);
-                });
-            }
-        });
+    profileBtn.addActionListener(e -> {
+        this.setVisible(false);
+        SwingUtilities.invokeLater(() -> new ProfilePanel(userManager, priceCalculator, incomeTracker, customer).setVisible(true));
+    });
 
-        headerButtons.add(profileBtn);
-        headerButtons.add(logoutBtn);
+    logoutBtn.addActionListener(e -> {
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        if (result == JOptionPane.YES_OPTION) {
+            this.dispose();
+            SwingUtilities.invokeLater(() -> {
+                JFrame loginFrame = new JFrame("Cinema Login");
+                loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                loginFrame.setSize(400, 350);
+                loginFrame.setLocationRelativeTo(null);
+                loginFrame.add(new LoginPanel(userManager, priceCalculator, incomeTracker));
+                loginFrame.setVisible(true);
+            });
+        }
+    });
 
-        header.add(welcomePanel, BorderLayout.WEST);
-        header.add(headerButtons, BorderLayout.EAST);
-        return header;
-    }
+    headerButtons.add(profileBtn);
+    headerButtons.add(logoutBtn);
+
+    header.add(welcomePanel, BorderLayout.WEST);
+    header.add(headerButtons, BorderLayout.EAST);
+    return header;
+}
 
     private JPanel createUserPanel() {
         JPanel userPanel = new JPanel(new BorderLayout());
@@ -357,7 +359,7 @@ public class CinemaBookingGUI extends JFrame {
         bookNowBtn.setPreferredSize(new Dimension(110, 40));
         RoundedButton trailerBtn = new RoundedButton("Trailer", 20, new Color(32, 34, 37), new Color(48, 50, 53));
         trailerBtn.setPreferredSize(new Dimension(90, 40));
-        RoundedButton favoriteBtn = new RoundedButton("☆", 20, new Color(32, 34, 37), new Color(48, 50, 53));
+        RoundedButton favoriteBtn = new RoundedButton("<3", 20, new Color(32, 34, 37), new Color(48, 50, 53));
         favoriteBtn.setPreferredSize(new Dimension(42, 40));
 
         favoriteBtn.addActionListener(e -> favoriteBtn.setText(favoriteBtn.getText().equals("☆") ? "★" : "☆"));

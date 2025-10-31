@@ -187,7 +187,7 @@ public class CinemaSeatBookingGUI extends JFrame {
         
         // Back button
         JButton backBtn = new JButton("← Back");
-        styleRCSecondaryButton(backBtn);
+        styleRCPrimaryButton(backBtn);
         backBtn.setPreferredSize(new Dimension(100, 35));
         backBtn.addActionListener(e -> {
             this.dispose();
@@ -256,7 +256,7 @@ public class CinemaSeatBookingGUI extends JFrame {
         // Initialize selectedTimeLabel first
         selectedTimeLabel = new JLabel("");
         selectedTimeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        selectedTimeLabel.setForeground(RC_GRAY);
+        selectedTimeLabel.setForeground(TEXT_PRIMARY);
         selectedTimeLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         
         // Scrollable showtime container
@@ -397,25 +397,25 @@ public class CinemaSeatBookingGUI extends JFrame {
         return button;
     }
     
-    private void styleArrowButton(JButton button) {
-        button.setBackground(RC_GRAY);
-        button.setForeground(TEXT_PRIMARY);
-        button.setFont(new Font("Arial", Font.BOLD, 16));
-        button.setBorder(BorderFactory.createEmptyBorder());
-        button.setFocusPainted(false);
+private void styleArrowButton(JButton button) {
+    button.setBackground(new Color(50, 50, 50));  // Dark grey
+    button.setForeground(RC_DARK_GRAY);
+    button.setFont(new Font("Arial", Font.BOLD, 16));
+    button.setBorder(BorderFactory.createEmptyBorder());
+    button.setFocusPainted(false);
+    
+    button.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            button.setBackground(new Color(80, 80, 80));  // Medium grey on hover
+        }
         
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(RC_RED);
-            }
-            
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(RC_GRAY);
-            }
-        });
-    }
+        @Override
+        public void mouseExited(MouseEvent e) {
+            button.setBackground(new Color(50, 50, 50));  // Back to dark grey
+        }
+    });
+}
     
     private void updateSeatPricing() {
         if (selectedShowTime != null) {
@@ -724,10 +724,12 @@ public class CinemaSeatBookingGUI extends JFrame {
             selectedSeatsLabel.setText("Selected Seats: " + seatList.toString());
             totalPriceLabel.setText("Total: $" + String.format("%.2f", total));
             
-            if (bookButton != null && selectedShowTime != null) {
-                bookButton.setEnabled(true);
-                styleRCPrimaryButton(bookButton);
-            }
+        if (bookButton != null && selectedShowTime != null) {
+          bookButton.setEnabled(true);
+          bookButton.setBackground(new Color(60, 60, 60));
+          bookButton.setForeground(RC_DARK_GRAY);
+          bookButton.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 80), 2));
+        }
         }
     }
     
@@ -1047,53 +1049,53 @@ private void handleBooking() {
     }
     
     // Button styling methods
-    private void styleRCPrimaryButton(JButton button) {
-        button.setBackground(RC_BLACK);
-        button.setForeground(TEXT_SECONDARY);
-        button.setFont(new Font("Arial", Font.BOLD, 13));
-        button.setBorder(BorderFactory.createLineBorder(TEXT_PRIMARY, 2));
-        button.setFocusPainted(false);
-        
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(TEXT_PRIMARY);
-                    button.setForeground(RC_BLACK);
-                }
-            }
-            
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(RC_BLACK);
-                    button.setForeground(TEXT_PRIMARY);
-                }
-            }
-        });
-    }
+private void styleRCPrimaryButton(JButton button) {
+    button.setBackground(new Color(50, 50, 50));  // Dark grey
+    button.setForeground(RC_DARK_GRAY);
+    button.setFont(new Font("Arial", Font.BOLD, 13));
+    button.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 2));  // Medium grey border
+    button.setFocusPainted(false);
     
-    private void styleRCSecondaryButton(JButton button) {
-        button.setBackground(CARD_BACKGROUND);
-        button.setForeground(TEXT_PRIMARY);
-        button.setFont(new Font("Arial", Font.BOLD, 11));
-        button.setBorder(new RoundedBorder(6, BORDER_COLOR, 1));
-        button.setFocusPainted(false);
+    button.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            if (button.isEnabled()) {
+                button.setBackground(new Color(80, 80, 80));  // Medium grey on hover
+                button.setForeground(RC_DARK_GRAY);
+            }
+        }
         
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(new Color(220, 53, 69));
-                button.setBorder(new RoundedBorder(6, new Color(220, 53, 69), 1));
+        @Override
+        public void mouseExited(MouseEvent e) {
+            if (button.isEnabled()) {
+                button.setBackground(new Color(50, 50, 50));  // Back to dark grey
+                button.setForeground(RC_DARK_GRAY);
             }
-            
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(CARD_BACKGROUND);
-                button.setBorder(new RoundedBorder(6, BORDER_COLOR, 1));
-            }
-        });
-    }
+        }
+    });
+}
+    
+private void styleRCSecondaryButton(JButton button) {
+    button.setBackground(new Color(50, 50, 50));  // Dark grey
+    button.setForeground(RC_DARK_GRAY);
+    button.setFont(new Font("Arial", Font.BOLD, 11));
+    button.setBorder(new RoundedBorder(6, new Color(100, 100, 100), 1));  // Medium grey border
+    button.setFocusPainted(false);
+    
+    button.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            button.setBackground(new Color(80, 80, 80));  // Medium grey on hover
+            button.setBorder(new RoundedBorder(6, new Color(120, 120, 120), 1));
+        }
+        
+        @Override
+        public void mouseExited(MouseEvent e) {
+            button.setBackground(new Color(50, 50, 50));  // Back to dark grey
+            button.setBorder(new RoundedBorder(6, new Color(100, 100, 100), 1));
+        }
+    });
+}
     
     // ShowTime data class
     private static class ShowTime {
