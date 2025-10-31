@@ -1,3 +1,7 @@
+/**
+ *
+ * @author xps1597
+ */
 package com.cinema.cinema.booking.exception;
 
 public class BookingException extends RuntimeException {

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------
-Tue Oct 28 19:38:35 NZDT 2025:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.17.1.0 - (1913217): instance a816c00e-019a-298a-35a8-00000f38a5b8 
+Fri Oct 31 20:48:32 NZDT 2025:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.17.1.0 - (1913217): instance a816c00e-019a-393d-5344-00000f38c1c8 
 on database directory C:\Users\lekat\OneDrive\Desktop\PDC-ASSIGNMENT2\PDC-ASSIGNMENT2\CinemaDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e 
 Loaded from file:/C:/Users/lekat/.m2/repository/org/apache/derby/derby/10.17.1.0/derby-10.17.1.0.jar
 java.vendor=Oracle Corporation
@@ -11,3 +11,9 @@ os.arch=amd64
 os.version=10.0
 derby.system.home=null
 Database Class Loader started - derby.database.classpath=''
+----------------------------------------------------------------
+Fri Oct 31 20:49:03 NZDT 2025: Shutting down Derby engine
+----------------------------------------------------------------
+Fri Oct 31 20:49:03 NZDT 2025:
+Shutting down instance a816c00e-019a-393d-5344-00000f38c1c8 on database directory C:\Users\lekat\OneDrive\Desktop\PDC-ASSIGNMENT2\PDC-ASSIGNMENT2\CinemaDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e 
+----------------------------------------------------------------

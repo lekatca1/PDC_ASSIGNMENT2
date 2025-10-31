@@ -1,8 +1,12 @@
-package com.cinema.cinema.booking.dao;  // CORRECTED
+package com.cinema.cinema.booking.dao;  
+/**
+ *
+ * @author xps1597
+ */
 
-import com.cinema.cinema.booking.models.User;  // CORRECTED
-import com.cinema.cinema.booking.models.Customer;  // CORRECTED
-import com.cinema.cinema.booking.models.Admin;  // CORRECTED
+import com.cinema.cinema.booking.models.User;   
+import com.cinema.cinema.booking.models.Customer;  
+import com.cinema.cinema.booking.models.Admin;  
 import java.util.List;
 import java.util.Optional;
 

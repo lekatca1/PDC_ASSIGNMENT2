@@ -1,3 +1,7 @@
+/**
+ *
+ * @author xps1597
+ */
 package com.cinema.cinema.booking.gui;
 
 import com.cinema.cinema.booking.models.Admin;
